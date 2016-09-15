@@ -5,10 +5,6 @@ public class Container extends Circuit {
 
   Set<Circuit> components = new HashSet<Circuit>();
 
-  public Container(Circuit par) {
-    super(par);
-  }
-
   @Override
   int width() {
     int max = 0;
@@ -68,6 +64,10 @@ public class Container extends Circuit {
     }
     return res;
   }
+  
+  boolean addComponent(Circuit c){
+    return addComponent(c, c.row, c.col);
+  }
 
   boolean addComponent(Circuit c, int row, int col) {
     for (int i = row; i < row + c.height(); i++) {
@@ -78,8 +78,21 @@ public class Container extends Circuit {
       }
     }
     components.add(c);
+    c.setPar(this);
     c.row = row;
     c.col = col;
+    if(row < 0){
+      this.row += row;
+      for(Circuit i : components){
+        i.row -= row;
+      }
+    }
+    if(col < 0){
+      this.col += col;
+      for(Circuit i : components){
+        i.col -= col;
+      }
+    }
     return true;
   }
 

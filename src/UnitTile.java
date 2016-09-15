@@ -1,13 +1,9 @@
-public class UnitTile extends Circuit {
+import java.util.ArrayList;
 
-  UTTemplate type;
+public abstract class UnitTile extends Circuit {
+
+  // UTTemplate type;
   boolean[] state;
-
-  public UnitTile(Circuit par, UTTemplate type) {
-    super(par);
-    this.type = type;
-    state = type.startstate();
-  }
 
   int width() {
     return 1;
@@ -19,7 +15,7 @@ public class UnitTile extends Circuit {
 
   @Override
   void calc() {
-    int[] inputsides = type.inputs();
+    int[] inputsides = inputs();
     boolean[] invals = new boolean[inputsides.length];
     for (int i = 0; i < inputsides.length; i++) {
       int side = trans(inputsides[i]);
@@ -38,7 +34,7 @@ public class UnitTile extends Circuit {
             + elec));
       }
     }
-    state = type.updatestate(invals, state);
+    state = updatestate(invals, state);
   }
 
   int trans(int side) {
@@ -68,8 +64,8 @@ public class UnitTile extends Circuit {
 
   @Override
   void post() {
-    int[] outputsides = type.outputs();
-    boolean[] outvals = type.output(state);
+    int[] outputsides = outputs();
+    boolean[] outvals = output(state);
     for (int i = 0; i < outputsides.length; i++) {
       int side = trans(outputsides[i]);
       int elec = 0;
@@ -90,8 +86,10 @@ public class UnitTile extends Circuit {
     }
 
     char[][] res = new char[height() * scale][width() * scale];
-    if (scale == 3) {
-      res = trans(type.print3x3(state));
+    if (scale == 1) {
+      res = trans(new char[][] { { print1x1(state) } });
+    } else if (scale == 3) {
+      res = trans(print3x3(state));
     } else {
       for (int i = 0; i < res.length; i++) {
         for (int j = 0; j < res[0].length; j++) {
@@ -142,6 +140,10 @@ public class UnitTile extends Circuit {
         data = 'V';
       } else if (data == 'V' || data == 'v') {
         data = '^';
+      } else if (data == '\\') {
+        data = '/';
+      } else if (data == '/') {
+        data = '\\';
       }
     }
     String arrows = ">V<^";
@@ -155,5 +157,27 @@ public class UnitTile extends Circuit {
       data = diags.charAt((diags.indexOf(data) + rot) % 2);
     }
     return data;
+  }
+
+  abstract int[] inputs();
+
+  abstract int[] outputs();
+
+  abstract boolean[] updatestate(boolean[] input, boolean[] state);
+
+  abstract boolean[] output(boolean[] state);
+
+  abstract char print1x1(boolean[] state);
+
+  abstract char[][] print3x3(boolean[] state);
+  
+  ArrayList<String> toTokens(){
+    ArrayList<String> res = new ArrayList<String>();
+    res.add(""+state.length);
+    for(int i = 0; i < state.length; i++){
+      res.add(boolToStr(state[i]));
+    }
+    res.addAll(super.toTokens());
+    return res;
   }
 }

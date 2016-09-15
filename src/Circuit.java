@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,10 +11,19 @@ public abstract class Circuit {
   abstract void calc();
 
   abstract void post();
-  
+
   abstract char[][] print(int scale);
-  
+
   abstract int contains(int r, int c);
+  
+  ArrayList<String> toTokens(){
+    ArrayList<String> res = new ArrayList<String>();
+    res.add(""+row);
+    res.add(""+col);
+    res.add(""+rot);
+    res.add(""+boolToStr(flip));
+    return res;
+  }
 
   Circuit par;
   int row;
@@ -22,16 +32,18 @@ public abstract class Circuit {
   boolean flip = false;
   Map<Integer, Map<Integer, Integer>> electrons;
 
-  public Circuit(Circuit par) {
-    this.par = par;
-    if (par == null) {
+  public Circuit() {
       electrons = new HashMap<Integer, Map<Integer, Integer>>();
-    }
   }
-  
-  void fixRot(){
+
+  public void setPar(Circuit par) {
+    this.par = par;
+    electrons = null;
+  }
+
+  void fixRot() {
     rot = rot % 4;
-    if(rot < 0){
+    if (rot < 0) {
       rot += 4;
     }
   }
@@ -57,12 +69,11 @@ public abstract class Circuit {
     }
     Map<Integer, Integer> diag = electrons.get(sum);
     int val = 0;
-    if (diag != null) {
+    if (diag != null && diag.get(dif) != null) {
+      // System.out.println(diag + " " + dif);
       val = diag.get(dif);
     }
-    
-    System.out.println("g " + r + " " + c + " " + side + " " + val); /// HERE
-    
+
     return val;
   }
 
@@ -71,9 +82,7 @@ public abstract class Circuit {
       par.setElectron(r + this.row, c + this.col, side, val);
       return;
     }
-    
-    System.out.println("s " + r + " " + c + " " + side + " " + val); /// AND HERE
-    
+
     int sum = r + c;
     int dif = c - r;
     switch (side) {
@@ -94,16 +103,22 @@ public abstract class Circuit {
       diag = new HashMap<Integer, Integer>();
       electrons.put(sum, diag);
     }
-    diag.put(dif, val);
+    Integer prev = diag.get(dif);
+    if (prev == null || prev == 0) {
+      diag.put(dif, val);
+    } else if (val != 0) {
+      throwError(new Error(r, c, "electron overwrite of " + val + " over "
+          + prev));
+    }
   }
-  
-  public void clearElectrons(){
-    if(par != null){
+
+  public void clearElectrons() {
+    if (par != null) {
       par.clearElectrons();
       return;
     }
-    for(Map<Integer,Integer> col : electrons.values()){
-      for(int key : col.keySet()){
+    for (Map<Integer, Integer> col : electrons.values()) {
+      for (int key : col.keySet()) {
         col.put(key, 0);
       }
     }
@@ -122,6 +137,13 @@ public abstract class Circuit {
       return;
     }
     System.out.println(e);
+  }
+  
+  static public String boolToStr(boolean b){
+    if(b){
+      return "t";
+    }
+    return "f";
   }
 
 }
